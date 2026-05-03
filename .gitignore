@@ -13,7 +13,6 @@ dist/
 .stylelintcache
 
 # Databases
-*.db
 *.sqlite3
 
 # OS
@@ -21,7 +20,6 @@ dist/
 Thumbs.db
 
 # Project Specific
-backend/static/kawach-extension.zip
 kawach-e9ac6-firebase-adminsdk-fbsvc-8d57e85987.json
 package_extension.py
 kawach.db
