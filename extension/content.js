@@ -1,5 +1,6 @@
 // Real-time evaluation when a page loads
 const currentUrl = window.location.href;
+const API_URL = "https://kawach-backend.onrender.com";
 
 // Don't scan local pages or chrome extensions
 if (!currentUrl.startsWith("chrome://") && !currentUrl.startsWith("http://localhost") && !currentUrl.startsWith("http://127.0.0.1")) {
