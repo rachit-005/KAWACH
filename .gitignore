@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# Node.js
+node_modules/
+dist/
+.eslintcache
+.stylelintcache
+
+# Databases
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific
+backend/static/kawach-extension.zip
+kawach-e9ac6-firebase-adminsdk-fbsvc-8d57e85987.json
+package_extension.py
+kawach.db
+extension.zip

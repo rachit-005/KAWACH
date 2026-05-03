@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import os
+import sqlite3
 from models.database import init_db, get_db_connection
 
 # Initialize Flask App
@@ -87,17 +89,18 @@ def osint_scan():
     })
 
 @app.route('/api/vault', methods=['GET', 'POST'])
-def manage_vault():
-    conn = get_db_connection()
-    cursor = conn.cursor()
+@app.route('/api/vault/<string:item_id>', methods=['DELETE']) # Changed to string for Firestore Doc ID
+def manage_vault(item_id=None):
+    db = get_db_connection()
+    user_id = 1 # Prototype user
     
-    # For prototype, assume user_id = 1
-    user_id = 1
-    
-    # Ensure dummy user exists
-    cursor.execute("INSERT OR IGNORE INTO users (id, username, password_hash) VALUES (1, 'admin', 'dummyhash')")
-    conn.commit()
-    
+    if request.method == 'DELETE':
+        if item_id is None:
+            return jsonify({"error": "ID required"}), 400
+        # Firestore delete
+        db.collection('vault').document(item_id).delete()
+        return jsonify({"status": "Success", "message": "Entry removed"})
+
     if request.method == 'POST':
         data = request.json
         website = data.get('website')
@@ -105,29 +108,71 @@ def manage_vault():
         password = data.get('password')
         
         encrypted_pw, iv = encrypt_vault_data(password)
-        cursor.execute("INSERT INTO vault (user_id, website, username, encrypted_password, iv) VALUES (?, ?, ?, ?, ?)",
-                       (user_id, website, username, encrypted_pw, iv))
-        conn.commit()
-        conn.close()
+        
+        # Firestore Create
+        db.collection('vault').add({
+            "user_id": user_id,
+            "website": website,
+            "username": username,
+            "encrypted_password": encrypted_pw,
+            "iv": iv
+        })
         return jsonify({"status": "Success", "message": "Password encrypted (AES-256) and saved"})
         
     elif request.method == 'GET':
-        cursor.execute("SELECT id, website, username, encrypted_password, iv FROM vault WHERE user_id = ?", (user_id,))
-        rows = cursor.fetchall()
+        # Firestore Read
+        docs = db.collection('vault').where('user_id', '==', user_id).get()
         passwords = []
-        for row in rows:
+        for doc in docs:
+            row = doc.to_dict()
             try:
                 decrypted = decrypt_vault_data(row['encrypted_password'], row['iv'])
             except Exception as e:
                 decrypted = "Error decrypting"
             passwords.append({
-                "id": row['id'],
+                "id": doc.id,
                 "website": row['website'],
                 "username": row['username'],
                 "password": decrypted
             })
-        conn.close()
         return jsonify({"vault": passwords})
 
+@app.route('/api/scan/history', methods=['GET'])
+def get_scan_history():
+    user_id = 1 
+    db = get_db_connection()
+    # Firestore query
+    docs = db.collection('history')\
+             .where('user_id', '==', user_id)\
+             .order_by('scan_date', direction='DESCENDING')\
+             .limit(10)\
+             .get()
+             
+    history = []
+    for doc in docs:
+        data = doc.to_dict()
+        # Firestore doesn't automatically have 'scan_date' as Timestamp unless we send it.
+        # Handle conversion if needed
+        history.append(data)
+    
+    return jsonify(history)
+
+@app.route('/api/scan/save', methods=['POST'])
+def save_scan_result():
+    data = request.json
+    user_id = 1 
+    db = get_db_connection()
+    
+    from datetime import datetime
+    db.collection('history').add({
+        "user_id": user_id,
+        "cyber_health_score": data['score'],
+        "device_risks_found": data['device_risks'],
+        "network_risks_found": data['network_risks'],
+        "scan_date": datetime.now() # Use server time
+    })
+    return jsonify({"status": "success"})
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)

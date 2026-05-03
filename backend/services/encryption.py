@@ -5,7 +5,9 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
 # A fixed secret key for demonstration. In a real-world scenario, this should be an environment variable.
-AES_SECRET_KEY = b'16BytesSecretKey1234567890123456' # 32 bytes for AES-256
+AES_SECRET_KEY = os.getenv('KAWACH_AES_KEY', '16BytesSecretKey1234567890123456').encode('utf-8')[:32]
+if len(AES_SECRET_KEY) < 32:
+    AES_SECRET_KEY = AES_SECRET_KEY.ljust(32, b'0')
 
 def hash_password(password: str) -> str:
     """

@@ -1,57 +1,38 @@
-import sqlite3
+import firebase_admin
+from firebase_admin import credentials, firestore
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'kawach.db')
+# To use Firebase, you need to download your serviceAccountKey.json from:
+# Firebase Console -> Project Settings -> Service Accounts -> Generate New Private Key
+# Place that file in the 'backend/' directory.
 
+# Using an environment variable or a default file path
+# The specific key file provided by the user
+SERVICE_ACCOUNT_PATH = os.getenv('FIREBASE_SERVICE_ACCOUNT', 'kawach-e9ac6-firebase-adminsdk-fbsvc-8d57e85987.json')
+
+def init_firebase():
+    """
+    Initializes Firebase Admin SDK.
+    """
+    if not firebase_admin._apps:
+        try:
+            cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
+            firebase_admin.initialize_app(cred)
+            print("🔥 Firebase Admin initialized successfully.")
+        except Exception as e:
+            print(f"⚠️ Firebase Initialization Error: {e}")
+            print("Make sure 'serviceAccountKey.json' exists in the backend folder.")
+
+def get_firestore_db():
+    init_firebase()
+    return firestore.client()
+
+# Re-mapping existing SQLite helper functions to Firebase Logic
+# These will be used in app.py to minimize code changes
 def init_db():
-    """
-    Initializes the SQLite Database schema for KAWACH.
-    This hybrid database structure uses local SQLite for encrypted vault storage,
-    ensuring maximum user privacy as requested in the system architecture.
-    """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # User accounts schema
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL, -- bcrypt hashed
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Encrypted vault schema
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS vault (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            website TEXT NOT NULL,
-            username TEXT NOT NULL,
-            encrypted_password TEXT NOT NULL, -- AES-256 encrypted
-            iv TEXT NOT NULL, -- Initialization Vector for AES
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    # Scan history schema
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS scan_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            cyber_health_score INTEGER NOT NULL,
-            device_risks_found INTEGER NOT NULL,
-            network_risks_found INTEGER NOT NULL,
-            scan_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    # Firestore doesn't need schema initialization like SQL
+    pass
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    # This now returns the firestore client
+    return get_firestore_db()
