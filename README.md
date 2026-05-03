@@ -1,5 +1,9 @@
 # KAWACH: Advanced Cybersecurity Suite 🛡️
 
+### 🔗 Live Project Links
+- **🌐 Live Dashboard**: [https://kawach-livid.vercel.app/](https://kawach-livid.vercel.app/)
+- **⚙️ Backend API**: [https://kawach-backend.onrender.com](https://kawach-backend.onrender.com)
+
 KAWACH is a modular, high-performance cybersecurity ecosystem designed to provide multi-layered protection for digital assets. It features a real-time device security scanner, an AES-256 encrypted password vault, a breach scanner, and a browser extension for active phishing protection.
 
 ## 🚀 Key Modules
