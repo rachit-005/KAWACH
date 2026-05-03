@@ -5,7 +5,7 @@ import './App.css';
 
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
   ? 'http://127.0.0.1:5000' 
-  : 'https://your-backend-name.onrender.com'; // Change this after deploying backend
+  : 'https://kawach-backend.onrender.com';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
